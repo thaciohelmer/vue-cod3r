@@ -1,6 +1,14 @@
 <template>
   <div id="app" class="container">
     <h1>HTTP com Axios</h1>
+    <b-alert
+      show
+      dismissible
+      v-for="message in messages"
+      :key="message.text"
+      :variant="message.type"
+      >{{ message.text }}</b-alert
+    >
     <b-card>
       <b-form-group label="Name">
         <b-form-input
@@ -24,15 +32,29 @@
         >Load user</b-button
       >
     </b-card>
-    <hr />
-    <b-list-group>
-      <transition name="fade">
-        <b-list-group-item v-for="(user, id) in users" :key="id">
-          <strong>ID: </strong>{{ id }} <br />
-          <strong>NAME: </strong>{{ user.name }} <br />
-          <strong>EMAIL: </strong>{{ user.email }}
-        </b-list-group-item>
-      </transition>
+    <hr class="my-4" />
+    <b-list-group class="mb-4">
+      <b-list-group-item v-for="(user, id) in users" :key="id">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex flex-column">
+            <p><strong>ID:</strong> {{ id }}</p>
+            <p><strong>NAME:</strong> {{ user.name }}</p>
+            <p><strong>EMAIl:</strong> {{ user.email }}</p>
+          </div>
+          <b-row>
+            <b-col>
+              <b-button variant="primary" size="lg" @click="loadUser(id)"
+                >Details</b-button
+              ></b-col
+            >
+            <b-col>
+              <b-button variant="danger" size="lg" @click="deleteUser(id)"
+                >Delete</b-button
+              >
+            </b-col>
+          </b-row>
+        </div>
+      </b-list-group-item>
     </b-list-group>
   </div>
 </template>
@@ -47,13 +69,40 @@ export default {
         email: "",
       },
       users: [],
+      id: null,
+      messages: [],
     };
   },
   methods: {
+    loadUser(id) {
+      this.id = id;
+      this.user = { ...this.users[id] };
+    },
+    deleteUser(id) {
+      this.$http
+        .delete(`/usuarios/${id}.json`)
+        .then((_) => this.clear())
+        .catch((_) => {
+          this.messages.push({
+            text: "Transaction processing problem",
+            type: "warning",
+          });
+        });
+    },
+    clear() {
+      this.user.name = "";
+      this.user.email = "";
+      this.id = null;
+    },
     save() {
-      this.$http.post(this.dataBase, this.user).then(() => {
-        this.user.name = "";
-        this.user.email = "";
+      const method = this.id ? "patch" : "post";
+      const endUrl = this.id ? `${this.id}.json` : ".json";
+      this.$http[method](`/usuarios/${endUrl}`, this.user).then((_) => {
+        this.clear();
+        this.messages.push({
+          text: "Operation performed successfully",
+          type: "success",
+        });
       });
     },
     getUsers() {
@@ -76,7 +125,7 @@ export default {
 
 #app h1 {
   text-align: center;
-  margin: 50px;
+  margin: 1rem;
 }
 
 .fade-enter,
