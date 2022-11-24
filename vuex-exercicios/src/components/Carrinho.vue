@@ -28,15 +28,18 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
 export default {
   computed: {
+    ...mapGetters("carrinho", {
+      total: "valorTotal",
+    }),
     total() {
-      return this.produtos
-        .map((p) => p.quantidade * p.preco)
-        .reduce((total, atual) => total + atual, 0);
+      return this.$store.getters.valorTotal;
     },
     produtos() {
-      return this.$store.state.produtos;
+      return this.$store.state.carrinho.produtos;
     },
   },
 };
